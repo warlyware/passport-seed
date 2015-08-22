@@ -7,6 +7,8 @@ var configAuth = require('./auth');
 
 module.exports = function(passport) {
 
+
+  // PASSPORT SESSION SETUP
   passport.serializeUser(function(user, done) {
     done(null, user.id);
   });
@@ -17,6 +19,8 @@ module.exports = function(passport) {
     });
   });
 
+
+  // LOCAL SIGNUP
   passport.use('local-signup', new LocalStrategy({
     usernameField: 'email',
     passwordField: 'password',
@@ -24,12 +28,24 @@ module.exports = function(passport) {
   },
   function(req, email, password, done) {
     process.nextTick(function() {
-      User.findOne({'local.email': email }, function(err, user) {
+      User.findOne({'local.email': email }, function(err, existingUser) {
         if (err) {
           return done(err);
         }
-        if (user) {
+        if (existingUser) {
           return done(null, false, req.flash('signupMessage', 'That email is already taken.'));
+        }
+        if (req.user) {
+          var user = req.user;
+          user.local.email = email;
+          user.local.password = user.generateHash(password);
+          user.save(function(err) {
+            if (err) {
+              throw err;
+            }
+            return done(null, user);
+          });
+
         } else {
           var newUser = new User();
           newUser.local.email = email;
@@ -46,27 +62,30 @@ module.exports = function(passport) {
     });
   }));
 
+
+  // LOCAL LOGIN
   passport.use('local-login', new LocalStrategy({
-    usernameField: 'email',
-    passwordField: 'password',
-    passReqToCallback: true
-  }, function(req, email, password, done) {
-    User.findOne({ 'local.email': email }, function(err, user) {
-      if (err) {
-        return done(err);
-      }
-      if (!user) {
-        return done(null, false, req.flash('loginMessage', 'No user found'));
-      }
-      if (!user.validPassword(password)) {
-        return done(null, false, req.flash('loginMessage', 'Wrong password'));
-      }
+      usernameField: 'email',
+      passwordField: 'password',
+      passReqToCallback: true
+    }, function(req, email, password, done) {
+      User.findOne({ 'local.email': email }, function(err, user) {
+        if (err) {
+          return done(err);
+        }
+        if (!user) {
+          return done(null, false, req.flash('loginMessage', 'No user found'));
+        }
+        if (!user.validPassword(password)) {
+          return done(null, false, req.flash('loginMessage', 'Wrong password'));
+        }
 
-      return done(null, user); // return user after successful login
-    });
+        return done(null, user); // return user after successful login
+      });
 
-  }));
+    }));
 
+  // GOOGLE
   passport.use(new GoogleStrategy({
     clientID: configAuth.googleAuth.clientID,
     clientSecret: configAuth.googleAuth.clientSecret,
@@ -82,6 +101,23 @@ module.exports = function(passport) {
             return done(err);
           }
           if (user) {
+
+            // if user id but no token (previously linked, then removed)
+            // just add token and profile info
+
+            if(!user.google.token) {
+              user.google.token = token;
+              user.google.name = profile.displayName;
+              user.google.email = profile.emails[0].value;
+
+              user.save(function(err) {
+                if (err) {
+                  throw err;
+                }
+                return done(null, user);
+              });
+            }
+
             return done(null, user);
           } else {
             var newUser = new User();
