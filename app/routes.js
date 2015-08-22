@@ -50,6 +50,15 @@ module.exports = function(app, passport) {
       failureRedirect: '/'
     }));
 
+    // TWITTER
+    app.get('/auth/twitter', passport.authenticate('twitter'));
+
+    app.get('/auth/twitter/callback',
+        passport.authenticate('twitter', {
+            successRedirect : '/profile',
+            failureRedirect : '/'
+        }));
+
 
   // AUTHORIZATION ROUTES (LINK)
 
@@ -72,6 +81,17 @@ module.exports = function(app, passport) {
       failureRedirect: '/'
     }));
 
+    // TWITTER
+    app.get('/connect/twitter', passport.authorize('twitter', { scope : 'email' }));
+
+    // handle the callback after twitter has authorized the user
+    app.get('/connect/twitter/callback',
+        passport.authorize('twitter', {
+            successRedirect : '/profile',
+            failureRedirect : '/'
+        }));
+
+
   // UNLINK ACCOUNTS
 
     // LOCAL
@@ -93,6 +113,14 @@ module.exports = function(app, passport) {
       });
     });
 
+    // TWITTER
+    app.get('/unlink/twitter', function(req, res) {
+      var user = req.user;
+      user.twitter.token = undefined;
+      user.save(function(err) {
+         res.redirect('/profile');
+      });
+    });
 
 
   function isLoggedIn(req, res, next) {
