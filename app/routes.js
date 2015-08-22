@@ -43,6 +43,26 @@ module.exports = function(app, passport) {
     failureRedirect: '/'
   }));
 
+
+  app.get('/connect/local', function(req, res) {
+    res.render('connect-local.ejs', { message: req.flash('loginMessage') });
+  });
+
+  app.post('/connect/local', passport.authenticate('local-signup', {
+    successRedirect: '/profile',
+    failureRedirect: '/connect/local',
+    failureFlash: true
+  }));
+
+  app.get('/connect/google', passport.authorize('google', { scope: ['profile', 'email'] }));
+
+  app.get('/connect/google/callback', passport.authorize('google', {
+    successRedirect: '/profile',
+    failureRedirect: '/'
+  }));
+
+
+
   function isLoggedIn(req, res, next) {
     if (req.isAuthenticated()) {
       return next();
