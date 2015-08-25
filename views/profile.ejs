@@ -27,7 +27,6 @@
             <p>
               <strong>id</strong>: <%= user._id %><br>
               <strong>email</strong>: <%= user.local.email %><br>
-              <strong>password</strong>: <%= user.local.password %>
             </p>
 
             <a href="/unlink/local" class="btn btn-default">Unlink</a>
@@ -77,9 +76,32 @@
             <% } else { %>
               <a href="/connect/twitter" class="btn btn-info">Connect Twitter</a>
             <% } %>
-              
+
         </div>
       </div>
+
+      <!-- Github INFORMATION -->
+      <div class="col-sm-6">
+        <div class="well">
+          <h3 class="text-info"><span class="fa fa-github"></span> Github</h3>
+
+          <!-- check if the user has this token (is the user authenticated with this social account) -->
+          <% if (user.github.token) { %>
+            <p>
+              <strong>id</strong>: <%= user.github.id %><br>
+              <strong>token</strong>: <%= user.github.token %><br>
+              <strong>display name</strong>: <%= user.github.name %><br>
+              <strong>email</strong>: <%= user.github.email %>
+            </p>
+
+            <a href="/unlink/github" class="btn btn-success">Unlink</a>
+            <% } else { %>
+              <a href="/connect/github" class="btn btn-success">Connect Github</a>
+            <% } %>
+
+        </div>
+      </div>
+
 
     </div>
 

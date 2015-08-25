@@ -232,7 +232,7 @@ module.exports = function(passport) {
     passReqToCallback: true
   }, function(req, token, refreshToken, profile, done) {
     process.nextTick(function() {
-
+      console.log(profile);
       if (!req.user) {
 
         User.findOne({ 'github.id': profile.id }, function(err, user) {

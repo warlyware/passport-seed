@@ -37,7 +37,7 @@ app.use(passport.initialize());
 app.use(passport.session());
 app.use(flash());
 
-require('./app/routes.js')(app, passport);
+require('./routes/auth.js')(app, passport);
 
 // app.use('/', routes);
 // app.use('/users', users);

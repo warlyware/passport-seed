@@ -99,6 +99,16 @@ module.exports = function(app, passport) {
             failureRedirect : '/'
         }));
 
+    // GITHUB
+    app.get('/connect/github', passport.authorize('github'));
+
+    // handle the callback after github has authorized the user
+    app.get('/connect/github/callback',
+        passport.authorize('github', {
+            successRedirect : '/profile',
+            failureRedirect : '/'
+        }));
+
 
   // UNLINK ACCOUNTS
 
@@ -125,6 +135,16 @@ module.exports = function(app, passport) {
     app.get('/unlink/twitter', function(req, res) {
       var user = req.user;
       user.twitter.token = undefined;
+      user.save(function(err) {
+         res.redirect('/profile');
+      });
+    });
+
+
+    // GITHUB
+    app.get('/unlink/github', function(req, res) {
+      var user = req.user;
+      user.github.token = undefined;
       user.save(function(err) {
          res.redirect('/profile');
       });
