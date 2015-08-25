@@ -3,6 +3,7 @@ var GoogleStrategy = require('passport-google-oauth').OAuth2Strategy;
 var TwitterStrategy = require('passport-twitter').Strategy;
 
 // var GithubStrategy = require('passport-github').Strategy;
+var GithubStrategy = require('passport-github').Strategy;
 
 var User = require('../app/models/user');
 
@@ -220,7 +221,75 @@ module.exports = function(passport) {
 
       }
 
+    });
+  }));
 
+  // GITHUB
+  passport.use(new GithubStrategy({
+    clientID: configAuth.githubAuth.clientID,
+    clientSecret: configAuth.githubAuth.clientSecret,
+    callbackURL: configAuth.githubAuth.callbackURL,
+    passReqToCallback: true
+  }, function(req, token, refreshToken, profile, done) {
+    process.nextTick(function() {
+
+      if (!req.user) {
+
+        User.findOne({ 'github.id': profile.id }, function(err, user) {
+          if (err) {
+            return done(err);
+          }
+          if (user) {
+
+            // if user id but no token (previously linked, then removed)
+            // just add token and profile info
+
+            if(!user.github.token) {
+              user.github.token = token;
+              user.github.name = profile.displayName;
+              user.github.email = profile.emails[0].value;
+
+              user.save(function(err) {
+                if (err) {
+                  throw err;
+                }
+                return done(null, user);
+              });
+            }
+
+            return done(null, user);
+          } else {
+            var newUser = new User();
+
+            newUser.github.id = profile.id;
+            newUser.github.token = token;
+            newUser.github.name = profile.displayName;
+            newUser.github.email = profile.emails[0].value;
+
+            newUser.save(function(err) {
+              if (err) {
+                throw err;
+              }
+              return done(null, newUser);
+            });
+          }
+        });
+
+      } else {
+        var user = req.user;
+        user.github.id = profile.id;
+        user.github.token = token;
+        user.github.name = profile.displayName;
+        user.github.email = profile.emails[0].value;
+
+        user.save(function(err) {
+          if (err) {
+            throw err;
+          }
+          return done(null, user);
+        });
+
+      }
 
     });
   }));
